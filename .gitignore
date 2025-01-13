@@ -1,0 +1,15 @@
+# Python 
+__pycache__/ 
+*.py[cod] 
+*$py.class 
+*.so 
+.Python 
+venv/ 
+venv312/ 
+*.db 
+.env 
+.venv 
+env/ 
+ENV/ 
+instance/ 
+.webassets-cache 

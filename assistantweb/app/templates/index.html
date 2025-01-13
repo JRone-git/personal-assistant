@@ -1,0 +1,82 @@
+# app/templates/index.html
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Tasks</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                    Add Task
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for task in tasks %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   {% if task.completed %}checked{% endif %}
+                                   onchange="toggleTask({{ task.id }})"
+                            >
+                            <label class="form-check-label {% if task.completed %}text-muted text-decoration-line-through{% endif %}">
+                                {{ task.description }}
+                            </label>
+                        </div>
+                        <div>
+                            {% if task.due_date %}
+                            <small class="text-muted me-2">Due: {{ task.due_date.strftime('%Y-%m-%d') }}</small>
+                            {% endif %}
+                            <span class="badge bg-{{ task.priority|lower }}">{{ task.priority }}</span>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editTaskModal"
+                                    data-task-id="{{ task.id }}"
+                                    data-task-description="{{ task.description }}"
+                                    data-task-due-date="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}"
+                                    data-task-priority="{{ task.priority }}">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('main.add_task') }}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-control" name="due_date">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <select class="form-control" name="priority">
+                            <option value="High">High</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

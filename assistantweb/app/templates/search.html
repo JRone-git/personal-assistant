@@ -1,0 +1,52 @@
+<!-- app/templates/search.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <form class="mb-4" action="{{ url_for('main.search') }}" method="get">
+        <div class="input-group">
+            <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Search tasks, notes and documents...">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
+
+    {% if query %}
+    <div class="row">
+        <div class="col-md-4">
+            <h5>Tasks ({{ tasks|length }})</h5>
+            {% for task in tasks %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <p class="mb-0">{{ task.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="col-md-4">
+            <h5>Notes ({{ notes|length }})</h5>
+            {% for note in notes %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6>{{ note.title }}</h6>
+                    <p class="mb-0">{{ note.content[:200] }}...</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="col-md-4">
+            <h5>Documents ({{ documents|length }})</h5>
+            {% for doc in documents %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6>{{ doc.title }}</h6>
+                    <p class="mb-0">{{ doc.summary[:200] }}...</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
