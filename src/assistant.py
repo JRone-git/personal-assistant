@@ -2,10 +2,16 @@ from typing import List, Dict
 from datetime import datetime
 from models import Task, Note
 from database import Database
+from document_reader import DocumentReader
+
 class Assistant:
     def __init__(self, db: Database):
         self.db = db
+        self.document_reader = DocumentReader()
         self.user_name = self._get_or_ask_name()
+        self.tasks = self.db.data.get("tasks", [])
+        self.notes = self.db.data.get("notes", [])
+        self.documents = self.db.data.get("documents", [])
 
     def _get_or_ask_name(self) -> str:
         if "user_name" in self.db.data:
@@ -32,9 +38,12 @@ class Assistant:
                     else:
                         new_date = input("When would you like to do it? (YYYY-MM-DD): ")
                         if new_date:
-                            task['due_date'] = new_date
+                            task_index = self.tasks.index(task)
+                            self.tasks[task_index]['due_date'] = new_date
+                            self.db.data["tasks"][task_index]['due_date'] = new_date
                             self.db.save()
                             print(f"I've updated the due date to {new_date}")
+            self.tasks = self.db.data.get("tasks", [])
 
     def daily_greeting(self):
         hour = datetime.now().hour
@@ -55,14 +64,39 @@ class Assistant:
     def add_task(self, description: str, due_date: str, priority: str, category: str):
         task = Task(description, due_date, priority, category)
         self.db.add_task(task.to_dict())
+        self.tasks.append(task.to_dict())
 
     def get_tasks(self, filter_completed: bool = False) -> List[dict]:
-        return [task for task in self.db.data["tasks"] 
+        return [task for task in self.tasks 
                 if not filter_completed or not task["completed"]]
 
     def complete_task(self, index: int):
-        if 0 <= index < len(self.db.data["tasks"]):
+        if 0 <= index < len(self.tasks):
+            self.tasks[index]["completed"] = True
             self.db.data["tasks"][index]["completed"] = True
+            self.db.save()
+            return True
+        return False
+    
+    def mark_task_complete(self, index: int):
+        if 0 <= index - 1 < len(self.tasks):
+            return self.complete_task(index - 1)
+        return False
+    
+    def edit_task(self, index: int, description: str = None, due_date: str = None, priority: str = None, category: str = None):
+        if 0 <= index < len(self.tasks):
+            if description:
+                self.tasks[index]["description"] = description
+                self.db.data["tasks"][index]["description"] = description
+            if due_date:
+                self.tasks[index]["due_date"] = due_date
+                self.db.data["tasks"][index]["due_date"] = due_date
+            if priority:
+                self.tasks[index]["priority"] = priority
+                self.db.data["tasks"][index]["priority"] = priority
+            if category:
+                self.tasks[index]["category"] = category
+                self.db.data["tasks"][index]["category"] = category
             self.db.save()
             return True
         return False
@@ -70,31 +104,26 @@ class Assistant:
     def add_note(self, title: str, content: str):
         note = Note(title, content)
         self.db.add_note(note.to_dict())
+        self.notes.append(note.to_dict())
 
     def get_notes(self, search_term: str = "") -> List[dict]:
-        return [note for note in self.db.data["notes"] 
+        return [note for note in self.notes
                 if search_term.lower() in note["title"].lower() 
                 or search_term.lower() in note["content"].lower()]
 
-# Add to existing Assistant class:
+    def save_document_content(self, content):
+        document_data = {
+            "title": content["title"],
+            "content": content["content"],
+            "source": content["source"],
+            "type": content["type"],
+            "date_added": str(datetime.now()),
+            "summary": content["summary"]
+        }
+        self.db.save_document(document_data)
+        self.documents.append(document_data)
 
-def save_document_content(self, document_data: Dict[str, str]):
-    if "documents" not in self.db.data:
-        self.db.data["documents"] = []
-    
-    self.db.data["documents"].append({
-        "title": document_data["title"],
-        "content": document_data["content"],
-        "source": document_data["source"],
-        "type": document_data["type"],
-        "date_added": datetime.now().isoformat()
-    })
-    self.db.save()
-
-def search_documents(self, query: str) -> List[Dict]:
-    if "documents" not in self.db.data:
-        return []
-    
-    return [doc for doc in self.db.data["documents"] 
-            if query.lower() in doc["content"].lower() 
-            or query.lower() in doc["title"].lower()]
+    def search_documents(self, query: str) -> List[Dict]:
+        return [doc for doc in self.documents
+                if query.lower() in doc["content"].lower() 
+                or query.lower() in doc["title"].lower()]

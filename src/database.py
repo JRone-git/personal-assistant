@@ -14,7 +14,7 @@ class Database:
         return {"tasks": [], "notes": []}
 
     def save(self):
-        with open(self.db_file, "w") as f:
+        with open(self.db_file, 'w') as f:
             json.dump(self.data, f, indent=4)
 
     def add_task(self, task_dict: Dict):
@@ -23,4 +23,10 @@ class Database:
 
     def add_note(self, note_dict: Dict):
         self.data["notes"].append(note_dict)
+        self.save()
+
+    def save_document(self, document_data):
+        if "documents" not in self.data:
+            self.data["documents"] = []
+        self.data["documents"].append(document_data)
         self.save()
